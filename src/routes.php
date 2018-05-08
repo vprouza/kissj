@@ -252,10 +252,7 @@ $app->group("/v1", function () use ($helper) {
 			
 			
 			$this->get("/createEvent", function (Request $request, Response $response, array $args) {
-				$banks = [
-					['name' => 'FioBanka', 'id' => 222],
-					['name' => 'Komerční banka', 'id' => 111],
-				];
+				$banks = $this->banks->getBanks();
 				return $this->view->render($response, 'kissj/createEvent.twig', ['banks' => $banks]);
 			})->setName('createEvent')->add($helper['loggedOnly']);
 			

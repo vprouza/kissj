@@ -7,3 +7,5 @@ logs/*
 temp/*
 backups/*
 forms/*
+composer.lock
+composer.phar

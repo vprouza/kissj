@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Patrol;
 
 use kissj\Orm\Repository;
@@ -7,6 +9,6 @@ use kissj\Orm\Repository;
 /**
  * @table participant
  */
-class PatrolParticipantRepository extends Repository {
-
+class PatrolParticipantRepository extends Repository
+{
 }

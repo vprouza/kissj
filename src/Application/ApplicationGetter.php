@@ -1,16 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Application;
 
-class ApplicationGetter {
+use DI\Bridge\Slim\Bridge;
+use DI\ContainerBuilder;
+use kissj\Settings\Settings;
+use Slim\App;
+
+class ApplicationGetter
+{
     public function getApp(
-        string $envPath = __DIR__.'/../../',
+        string $envPath = __DIR__ . '/../../',
         string $envFilename = '.env',
-        string $dbFullPath = __DIR__.'/../db_dev.sqlite', 
-        string $tempPath = __DIR__.'/../../temp'
-    ): \Slim\App {
-        $containerBuilder = new \DI\ContainerBuilder();
-        $containerBuilder->addDefinitions((new \kissj\Settings\Settings())->getContainerDefinition(
+        string $dbFullPath = __DIR__ . '/../db_dev.sqlite',
+        string $tempPath = __DIR__ . '/../../temp'
+    ): App {
+        $containerBuilder = new ContainerBuilder();
+        $containerBuilder->addDefinitions((new Settings())->getContainerDefinition(
             $envPath,
             $envFilename,
             $dbFullPath
@@ -21,8 +29,9 @@ class ApplicationGetter {
             // https://php-di.org/doc/performances.html#optimizing-for-compilation
             $containerBuilder->enableCompilation($tempPath);
         }
+
         $container = $containerBuilder->build();
-        $app = \DI\Bridge\Slim\Bridge::create($container);
+        $app       = Bridge::create($container);
         $app->setBasePath($_ENV['BASEPATH']);
 
         $app = (new Middleware())->addMiddlewaresInto($app);

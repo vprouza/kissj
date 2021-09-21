@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Mailer;
 
-class MailerSettings {
+class MailerSettings
+{
     public function __construct(
         public string $smtp,
         public string $smtpServer,

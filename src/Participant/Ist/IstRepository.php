@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Ist;
 
 use kissj\Orm\Repository;
@@ -7,16 +9,20 @@ use kissj\Orm\Repository;
 /**
  * @table participant
  */
-class IstRepository extends Repository {
+class IstRepository extends Repository
+{
     /**
      * @return Ist[]
      */
-    public function findAll(): array {
+    public function findAll(): array
+    {
         $istsOnly = [];
         foreach (parent::findAll() as $participant) {
-            if ($participant instanceof Ist) {
-                $istsOnly[] = $participant;
+            if (! ($participant instanceof Ist)) {
+                continue;
             }
+
+            $istsOnly[] = $participant;
         }
 
         return $istsOnly;

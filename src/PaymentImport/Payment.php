@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\PaymentImport;
 
-class Payment {
+use DateTimeImmutable;
+
+class Payment
+{
     public $event;
     public string $variableSymbol;
     public int $senderName;
@@ -11,5 +16,5 @@ class Payment {
     public float $currency;
     public string $noteForReceiver;
     public string $dateReceived;
-    /** @var \DateTimeImmutable */
+    /** @var DateTimeImmutable */
 }

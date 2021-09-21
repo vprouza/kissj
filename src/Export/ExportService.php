@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Export;
 
 use kissj\Event\Event;
@@ -10,9 +12,16 @@ use kissj\User\User;
 use League\Csv\Reader;
 use League\Csv\Writer;
 use Psr\Http\Message\MessageInterface as Response;
+use SplTempFileObject;
 
+use function array_merge;
+use function assert;
+use function date;
 
-class ExportService {
+use const DATE_ATOM;
+
+class ExportService
+{
     public function __construct(
         private ParticipantRepository $participantRepository,
         private ParticipantService $participantService,
@@ -26,16 +35,16 @@ class ExportService {
         bool $amendTimestamp = true
     ) {
         if ($amendTimestamp) {
-            $fileName .= '_'.date(DATE_ATOM);
+            $fileName .= '_' . date(DATE_ATOM);
         }
 
         $response = $response->withAddedHeader('Content-Type', 'text/csv');
-        $response = $response->withAddedHeader('Content-Disposition', 'attachment; filename="'.$fileName.'.csv";');
+        $response = $response->withAddedHeader('Content-Disposition', 'attachment; filename="' . $fileName . '.csv";');
         $response = $response->withAddedHeader('Expires', '0');
         $response = $response->withAddedHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response = $response->withAddedHeader('Pragma', 'no-cache');
 
-        $csv = Writer::createFromFileObject(new \SplTempFileObject());
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
         $csv->setDelimiter(',');
         $csv->setOutputBOM(Reader::BOM_UTF8);
         $csv->insertAll($csvRows);
@@ -46,7 +55,8 @@ class ExportService {
         return $response->withBody($body);
     }
 
-    public function healthDataToCSV(Event $event): array {
+    public function healthDataToCSV(Event $event): array
+    {
         // TODO add event-aware
         $paidIsts = $this->participantService
             ->getAllParticipantsWithStatus(User::ROLE_IST, User::STATUS_PAID);
@@ -57,7 +67,7 @@ class ExportService {
         $approvedGuests = $this->participantService
             ->getAllParticipantsWithStatus(User::ROLE_GUEST, User::STATUS_PAID);*/
 
-        $rows = [];
+        $rows   = [];
         $rows[] = [
             'id',
             //'role',
@@ -108,7 +118,8 @@ class ExportService {
         return $rows;
     }
 
-    public function paidContactDataToCSV(Event $event): array {
+    public function paidContactDataToCSV(Event $event): array
+    {
         // TODO add event-aware
         $paidIsts = $this->participantService
             ->getAllParticipantsWithStatus(User::ROLE_IST, User::STATUS_PAID);
@@ -119,7 +130,7 @@ class ExportService {
         $approvedGuests = $this->participantService
             ->getAllParticipantsWithStatus(User::ROLE_GUEST, User::STATUS_PAID);*/
 
-        $rows = [];
+        $rows   = [];
         $rows[] = [
             'id',
             //'role',
@@ -158,7 +169,8 @@ class ExportService {
         return $rows;
     }
 
-    public function allRegistrationDataToCSV(Event $event): array {
+    public function allRegistrationDataToCSV(Event $event): array
+    {
         // TODO add event-aware
         $participants = $this->participantRepository->findAll();
 
@@ -180,11 +192,12 @@ class ExportService {
             'notes',
         ];
 
-        /** @var Participant $participant */
         foreach ($participants as $participant) {
+            assert($participant instanceof Participant);
             if ($participant->user->status === User::STATUS_OPEN) {
                 continue;
             }
+
             /*if ($participant instanceof PatrolLeader) {
                 $pPart = [
                     (string)$participant->id,
@@ -228,7 +241,7 @@ class ExportService {
 
             $rows[] = array_merge(
                 [
-                    (string)$participant->id,
+                    (string) $participant->id,
                     $participant->role,
                     $participant->user->status,
                     $participant->firstName,
@@ -244,9 +257,9 @@ class ExportService {
                     $participant->scarf,
                     $participant->notes,
                 ]
-            /*$pPart,
-            $freeParticipantPart,
-            $istPart*/
+                /*$pPart,
+                $freeParticipantPart,
+                $istPart*/
             );
         }
 

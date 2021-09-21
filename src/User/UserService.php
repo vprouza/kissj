@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\User;
 
+use DateTime;
 use kissj\Mailer\PhpMailerWrapper;
 use kissj\Orm\Relation;
 use kissj\Participant\Participant;
@@ -10,7 +13,16 @@ use PHPUnit\Framework\MockObject\RuntimeException;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteContext;
 
-class UserService {
+use function assert;
+use function in_array;
+use function md5;
+use function random_int;
+
+use const PHP_INT_MAX;
+use const PHP_INT_MIN;
+
+class UserService
+{
     public function __construct(
         private LoginTokenRepository $loginTokenRepository,
         private ParticipantRepository $participantRepository,
@@ -19,49 +31,55 @@ class UserService {
     ) {
     }
 
-    public function isEmailExisting(string $email): bool {
+    public function isEmailExisting(string $email): bool
+    {
         return $this->userRepository->isExisting(['email' => $email]);
     }
 
-    public function registerUser(string $email): User {
-        $user = new User();
+    public function registerUser(string $email): User
+    {
+        $user        = new User();
         $user->email = $email;
         $this->userRepository->persist($user);
 
         return $user;
     }
 
-    public function sendLoginTokenByMail(string $email, Request $request): string {
-        /** @var User $user */
+    public function sendLoginTokenByMail(string $email, Request $request): string
+    {
         $user = $this->userRepository->findOneBy(['email' => $email]);
+        assert($user instanceof User);
         $this->invalidateAllLoginTokens($user);
 
         // generate new token
-        $loginToken = new LoginToken();
-        $token = $this->generateTokenString();
+        $loginToken        = new LoginToken();
+        $token             = $this->generateTokenString();
         $loginToken->token = $token;
-        $loginToken->user = $user;
-        $loginToken->used = false;
+        $loginToken->user  = $user;
+        $loginToken->used  = false;
 
         $this->loginTokenRepository->persist($loginToken);
 
         // need to use full route
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $fullLink = $routeParser->fullUrlFor($request->getUri(), 'loginWithToken', ['token' => $token]);
+        $fullLink    = $routeParser->fullUrlFor($request->getUri(), 'loginWithToken', ['token' => $token]);
         $this->mailer->sendLoginToken($user, $fullLink);
 
         return $token;
     }
 
-    public function generateTokenString(): string {
+    public function generateTokenString(): string
+    {
         return md5(random_int(PHP_INT_MIN, PHP_INT_MAX));
     }
 
-    public function isLoginTokenValid(string $loginToken): bool {
+    public function isLoginTokenValid(string $loginToken): bool
+    {
         $criteria = ['token' => $loginToken, 'used' => false];
-        if (!$this->loginTokenRepository->isExisting($criteria)) {
+        if (! $this->loginTokenRepository->isExisting($criteria)) {
             return false;
         }
+
         $lastToken = $this->loginTokenRepository->findOneBy(
             $criteria,
             ['created_at' => false]
@@ -70,33 +88,39 @@ class UserService {
             return false;
         }
 
-        $lastValidTime = new \DateTime();
+        $lastValidTime = new DateTime();
         $lastValidTime->modify('-24 hours');
 
         return $lastToken->createdAt > $lastValidTime;
     }
 
-    public function getLoginTokenFromStringToken(string $token): LoginToken {
+    public function getLoginTokenFromStringToken(string $token): LoginToken
+    {
         return $this->loginTokenRepository->findOneBy(['token' => $token]);
     }
 
-    public function getTokenForEmail(string $email): string {
+    public function getTokenForEmail(string $email): string
+    {
         return $this->getTokenForUser($this->getUserFromEmail($email));
     }
 
-    public function getTokenForUser(User $user): string {
+    public function getTokenForUser(User $user): string
+    {
         return $this->loginTokenRepository->findOneBy(['user' => $user])->token;
     }
 
-    public function getUserFromEmail(string $email): User {
+    public function getUserFromEmail(string $email): User
+    {
         return $this->userRepository->findOneBy(['email' => $email]);
     }
 
-    public function logoutUser(): void {
+    public function logoutUser(): void
+    {
         unset($_SESSION['user']);
     }
 
-    public function invalidateAllLoginTokens(User $user): void {
+    public function invalidateAllLoginTokens(User $user): void
+    {
         // invalidate all not yet used login tokens
         $existingTokens = $this->loginTokenRepository->findBy([$user, 'used' => false]);
         foreach ($existingTokens as $token) {
@@ -105,22 +129,24 @@ class UserService {
         }
     }
 
-    public function setRole(User $user, string $role): void {
-        if (!$this->isRoleValid($role)) {
-            throw new RuntimeException('Role '.$role.' is not valid!');
+    public function setRole(User $user, string $role): void
+    {
+        if (! $this->isRoleValid($role)) {
+            throw new RuntimeException('Role ' . $role . ' is not valid!');
         }
 
-        $participant = new Participant();
+        $participant       = new Participant();
         $participant->user = $user;
         $participant->role = $role;
         $this->participantRepository->persist($participant);
 
-        $user->role = $role;
+        $user->role   = $role;
         $user->status = User::STATUS_OPEN;
         $this->userRepository->persist($user);
     }
 
-    public function getClosedIstsCount(): int {
+    public function getClosedIstsCount(): int
+    {
         return $this->userRepository->countBy([
             'role' => User::ROLE_IST,
             //'event' => $this->eventName, // TODO fix
@@ -128,7 +154,8 @@ class UserService {
         ]);
     }
 
-    public function getClosedPatrolsCount(): int {
+    public function getClosedPatrolsCount(): int
+    {
         return $this->userRepository->countBy([
             'role' => User::ROLE_PATROL_LEADER,
             //'event' => $this->eventName, // TODO fix
@@ -136,7 +163,8 @@ class UserService {
         ]);
     }
 
-    public function getClosedFreeParticipantsCount(): int {
+    public function getClosedFreeParticipantsCount(): int
+    {
         return $this->userRepository->countBy([
             'role' => User::ROLE_FREE_PARTICIPANT,
             //'event' => $this->eventName, // TODO fix
@@ -144,7 +172,8 @@ class UserService {
         ]);
     }
 
-    protected function isRoleValid(string $role): bool {
+    protected function isRoleValid(string $role): bool
+    {
         $allowedRoles = [
             User::ROLE_IST,
             User::ROLE_PATROL_LEADER,
@@ -155,28 +184,32 @@ class UserService {
         return in_array($role, $allowedRoles, true);
     }
 
-    public function openRegistration(User $user): User {
+    public function openRegistration(User $user): User
+    {
         $user->status = User::STATUS_OPEN;
         $this->userRepository->persist($user);
 
         return $user;
     }
 
-    public function closeRegistration(User $user): User {
+    public function closeRegistration(User $user): User
+    {
         $user->status = User::STATUS_CLOSED;
         $this->userRepository->persist($user);
 
         return $user;
     }
 
-    public function approveRegistration(User $user): User {
+    public function approveRegistration(User $user): User
+    {
         $user->status = User::STATUS_APPROVED;
         $this->userRepository->persist($user);
 
         return $user;
     }
 
-    public function payRegistration(User $user): User {
+    public function payRegistration(User $user): User
+    {
         $user->status = User::STATUS_PAID;
         $this->userRepository->persist($user);
 

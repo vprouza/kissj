@@ -1,20 +1,22 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * Created by PhpStorm.
  * User: Martin Pecka
- * Date: 8.5.2018
- * Time: 22:41
  */
 
 namespace kissj\BankPayment;
 
+use kissj\PaymentImport\FioPaymentImporter;
 
-class Banks {
+class Banks
+{
     protected array $banks = [
         'fio' => [
             'bankCode' => '2010',
             'name' => 'Fio Banka',
-            'importer' => \kissj\PaymentImport\FioPaymentImporter::class
+            'importer' => FioPaymentImporter::class,
         ],
         'air' => [
             'bankCode' => '3030',
@@ -223,10 +225,11 @@ class Banks {
         'wuest' => [
             'bankCode' => '7980',
             'name' => 'Wüstenrot hypoteční banka a.s.',
-        ]
+        ],
     ];
 
-    public function getBanks() {
+    public function getBanks()
+    {
         return $this->banks;
     }
 }

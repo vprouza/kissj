@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use kissj\Application\ApplicationGetter;
+use PDO;
 use Phinx\Console\PhinxApplication;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Slim\App;
 use Slim\Psr7\Factory\StreamFactory;
 use Slim\Psr7\Headers;
@@ -13,19 +17,29 @@ use Slim\Psr7\Uri;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-class AppTestCase extends TestCase {
-    protected function getTestApp(bool $freshInit = true): App {
-        $testDbFullPath = __DIR__.'/temp/db_tests.sqlite';
+use function count;
+use function file_get_contents;
+use function fopen;
+use function glob;
+use function is_file;
+use function unlink;
+
+class AppTestCase extends TestCase
+{
+    protected function getTestApp(bool $freshInit = true): App
+    {
+        $testDbFullPath = __DIR__ . '/temp/db_tests.sqlite';
         if ($freshInit) {
             $this->clearTempFolder();
-            
-            if (true) { 
-                // use for tradiconal 
-                $pdo = new \PDO('sqlite:'.$testDbFullPath);
-                $sqlInit = file_get_contents(__DIR__.'/../sql/init.sql');
+
+            if (true) {
+                // use for tradiconal
+                $pdo     = new PDO('sqlite:' . $testDbFullPath);
+                $sqlInit = file_get_contents(__DIR__ . '/../sql/init.sql');
                 if ($sqlInit === false) {
-                    throw new \RuntimeException('loading of sql/init.sql file failed');
+                    throw new RuntimeException('loading of sql/init.sql file failed');
                 }
+
                 $pdo->exec($sqlInit);
             } else {
                 // TODO use migrations to tests
@@ -33,17 +47,17 @@ class AppTestCase extends TestCase {
                     'command' => 'migrate',
                     '--configuration' => '',
                 ];
-                
+
                 $phinx = new PhinxApplication();
                 $phinx->find('migrate')->run(new ArrayInput($arguments), new BufferedOutput());
             }
         }
 
         return (new ApplicationGetter())->getApp(
-            __DIR__.'/', 
-            'env.testing', 
-            $testDbFullPath, 
-            __DIR__.'/temp'
+            __DIR__ . '/',
+            'env.testing',
+            $testDbFullPath,
+            __DIR__ . '/temp'
         );
     }
 
@@ -54,7 +68,7 @@ class AppTestCase extends TestCase {
         array $serverParams = [],
         array $cookies = []
     ): Request {
-        $uri = new Uri('', '', 80, $path);
+        $uri    = new Uri('', '', 80, $path);
         $handle = fopen('php://temp', 'wb+');
         $stream = (new StreamFactory())->createStreamFromResource($handle);
 
@@ -72,12 +86,15 @@ class AppTestCase extends TestCase {
         return $request;
     }
 
-    protected function clearTempFolder(): void {
-        $files = glob(__DIR__.'/temp/*'); // skipping hidden files
+    protected function clearTempFolder(): void
+    {
+        $files = glob(__DIR__ . '/temp/*'); // skipping hidden files
         foreach ($files as $file) {
-            if (is_file($file)) {
-                unlink($file);
+            if (! is_file($file)) {
+                continue;
             }
+
+            unlink($file);
         }
     }
 }

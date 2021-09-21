@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\User;
 
-class UserRegeneration {
+class UserRegeneration
+{
     private ?User $currentUser;
 
-    public function __construct(private UserRepository $userRepository) {
+    public function __construct(private UserRepository $userRepository)
+    {
         $possibleUserSession = $_SESSION['user'] ?? [];
 
         if ($this->canRecreateUserFromSession($possibleUserSession)) {
@@ -15,19 +19,23 @@ class UserRegeneration {
         }
     }
 
-    public function getCurrentUser(): ?User {
+    public function getCurrentUser(): ?User
+    {
         return $this->currentUser;
     }
 
-    private function canRecreateUserFromSession(array $possibleUserSession): bool {
+    private function canRecreateUserFromSession(array $possibleUserSession): bool
+    {
         return $this->userRepository->isExisting(['id' => $possibleUserSession['id'] ?? null]);
     }
 
-    private function recreateUserFromSession(array $userSession): User {
+    private function recreateUserFromSession(array $userSession): User
+    {
         return $this->userRepository->findOneBy(['id' => $userSession['id']]);
     }
 
-    public function saveUserIdIntoSession(User $user): void {
+    public function saveUserIdIntoSession(User $user): void
+    {
         $_SESSION['user']['id'] = $user->id;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Patrol;
 
 use kissj\Participant\Participant;
@@ -7,8 +9,10 @@ use kissj\Participant\Participant;
 /**
  * @property PatrolLeader $patrolLeader m:hasOne(patrol_leader_id)
  */
-class PatrolParticipant extends Participant {
-    protected function initDefaults() {
+class PatrolParticipant extends Participant
+{
+    protected function initDefaults(): void
+    {
         $this->role = 'pp';
     }
 }

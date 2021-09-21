@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Event;
 
-class EventController {/*
+class EventController
+{
+/*
     public function createEvent(Request $request, Response $response, array $args) {
         $params = $request->getParams();
         /** @var \kissj\Event\EventService $eventService *//*

@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Admin;
 
 use kissj\Participant\Participant;
 use kissj\Payment\Payment;
 use kissj\User\User;
 
-class StatisticValueObject {
+class StatisticValueObject
+{
     protected int $openCount;
     protected int $closedCount;
     protected int $approvedCount;
@@ -16,12 +19,13 @@ class StatisticValueObject {
     /**
      * @param Participant[] $participants
      */
-    public function __construct(array $participants) {
-        $this->openCount = 0;
-        $this->closedCount = 0;
+    public function __construct(array $participants)
+    {
+        $this->openCount     = 0;
+        $this->closedCount   = 0;
         $this->approvedCount = 0;
-        $this->afterPayment = 0;
-        $this->paidCount = 0;
+        $this->afterPayment  = 0;
+        $this->paidCount     = 0;
 
         foreach ($participants as $participant) {
             switch ($participant->user->status) {
@@ -37,7 +41,8 @@ class StatisticValueObject {
                     $this->approvedCount++;
 
                     foreach ($participant->getPayments() as $payment) {
-                        if ($payment->status !== Payment::STATUS_CANCELED &&
+                        if (
+                            $payment->status !== Payment::STATUS_CANCELED &&
                             $payment->getElapsedPaymentDays() > $payment->getMaxElapsedPaymentDays()
                         ) {
                             $this->afterPayment++;
@@ -45,6 +50,7 @@ class StatisticValueObject {
                             break;
                         }
                     }
+
                     break;
 
                 case User::STATUS_PAID:
@@ -54,23 +60,28 @@ class StatisticValueObject {
         }
     }
 
-    public function getOpenCount(): int {
+    public function getOpenCount(): int
+    {
         return $this->openCount;
     }
 
-    public function getClosedCount(): int {
+    public function getClosedCount(): int
+    {
         return $this->closedCount;
     }
 
-    public function getApprovedCount(): int {
+    public function getApprovedCount(): int
+    {
         return $this->approvedCount;
     }
 
-    public function getAfterPayment(): int {
+    public function getAfterPayment(): int
+    {
         return $this->afterPayment;
     }
 
-    public function getPaidCount(): int {
+    public function getPaidCount(): int
+    {
         return $this->paidCount;
     }
 }

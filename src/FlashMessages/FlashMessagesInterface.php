@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\FlashMessages;
 
-
-interface FlashMessagesInterface {
+interface FlashMessagesInterface
+{
     public function info($message): void;
 
     public function success($message): void;

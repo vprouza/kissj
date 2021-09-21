@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Ist;
 
 use kissj\AbstractService;
@@ -12,7 +14,8 @@ use kissj\User\User;
 use kissj\User\UserService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class IstService extends AbstractService {
+class IstService extends AbstractService
+{
     public function __construct(
         private IstRepository $istRepository,
         private UserService $userService,
@@ -24,9 +27,10 @@ class IstService extends AbstractService {
     ) {
     }
 
-    public function getIst(User $user): Ist {
+    public function getIst(User $user): Ist
+    {
         if ($this->istRepository->countBy(['user' => $user]) === 0) {
-            $ist = new Ist();
+            $ist       = new Ist();
             $ist->user = $user;
             $this->istRepository->persist($ist);
         }
@@ -34,16 +38,18 @@ class IstService extends AbstractService {
         return $this->istRepository->findOneBy(['user' => $user]);
     }
 
-    public function addParamsIntoIst(Ist $ist, array $params): Ist {
+    public function addParamsIntoIst(Ist $ist, array $params): Ist
+    {
         $this->addParamsIntoPerson($params, $ist);
-        $ist->driversLicense = $params['driversLicense'] ?? null;
-        $ist->skills = $params['skills'] ?? null;
+        $ist->driversLicense    = $params['driversLicense'] ?? null;
+        $ist->skills            = $params['skills'] ?? null;
         $ist->preferredPosition = $params['preferredPosition'] ?? [];
 
         return $ist;
     }
 
-    public function isIstValidForClose(Ist $ist): bool {
+    public function isIstValidForClose(Ist $ist): bool
+    {
         if (
             ($this->contentArbiter->skills && $ist->skills === null)
             || ($this->contentArbiter->preferredPosition && $ist->preferredPosition === null)
@@ -55,9 +61,10 @@ class IstService extends AbstractService {
         return $this->isPersonValidForClose($ist, $this->contentArbiter);
     }
 
-    public function isCloseRegistrationValid(Ist $ist): bool {
+    public function isCloseRegistrationValid(Ist $ist): bool
+    {
         $validityFlag = true;
-        if (!$this->isIstValidForClose($ist)) {
+        if (! $this->isIstValidForClose($ist)) {
             $this->flashMessages->warning($this->translator->trans('flash.warning.istNoLock'));
 
             $validityFlag = false;
@@ -73,7 +80,8 @@ class IstService extends AbstractService {
         return $validityFlag;
     }
 
-    public function closeRegistration(Ist $ist): Ist {
+    public function closeRegistration(Ist $ist): Ist
+    {
         if ($this->isCloseRegistrationValid($ist)) {
             $this->userService->closeRegistration($ist->user);
             $this->mailer->sendRegistrationClosed($ist->user);
@@ -82,14 +90,16 @@ class IstService extends AbstractService {
         return $ist;
     }
 
-    public function openRegistration(Ist $ist, $reason): Ist {
+    public function openRegistration(Ist $ist, $reason): Ist
+    {
         $this->mailer->sendDeniedRegistration($ist, $reason);
         $this->userService->openRegistration($ist->user);
 
         return $ist;
     }
 
-    public function approveRegistration(Ist $ist): Ist {
+    public function approveRegistration(Ist $ist): Ist
+    {
         $payment = $this->paymentService->createAndPersistNewPayment($ist);
 
         $this->mailer->sendRegistrationApprovedWithPayment($ist, $payment);
@@ -98,7 +108,8 @@ class IstService extends AbstractService {
         return $ist;
     }
 
-    public function getAllIstsStatistics(): StatisticValueObject {
+    public function getAllIstsStatistics(): StatisticValueObject
+    {
         $ists = $this->istRepository->findAll();
 
         return new StatisticValueObject($ists);

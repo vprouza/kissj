@@ -1,31 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Functional;
 
-
+use DateTime;
 use kissj\Participants\Patrol\PatrolService;
 use kissj\User\RoleService;
 use kissj\User\UserService;
 
+use function assert;
 
-class PatrolLeaderTest extends BaseTestCase {
+use const DATE_ISO8601;
 
+class PatrolLeaderTest extends BaseTestCase
+{
     /**
      * Test that the index route returns a rendered response containing the text 'SlimFramework' but not a greeting
      */
-    public function testCreatePatrolLeader() {
-        $app = $this->app();
-        /** @var UserService $userService */
+    public function testCreatePatrolLeader(): void
+    {
+        $app         = $this->app();
         $userService = $app->getContainer()->get('userService');
-        /** @var PatrolService $patrolService */
+        assert($userService instanceof UserService);
         $patrolService = $app->getContainer()->get('patrolService');
-        /** @var RoleService $roleService */
+        assert($patrolService instanceof PatrolService);
         $roleService = $app->getContainer()->get('roleService');
+        assert($roleService instanceof RoleService);
 
-        $email = 'test4@example.com';
-        $user = $userService->registerUser($email);
+        $email        = 'test4@example.com';
+        $user         = $userService->registerUser($email);
         $patrolLeader = $patrolService->getPatrolLeader($user);
-        $role = $roleService->getRole($user);
+        $role         = $roleService->getRole($user);
 
         $this->assertEquals($patrolLeader->user->id, $user->id);
         $this->assertNotEquals('closed', $role->status);
@@ -34,28 +40,30 @@ class PatrolLeaderTest extends BaseTestCase {
     /**
      * Test that the index route returns a rendered response containing the text 'SlimFramework' but not a greeting
      */
-    public function testFillRegistration() {
-        $app = $this->app();
-        /** @var UserService $userService */
+    public function testFillRegistration(): void
+    {
+        $app         = $this->app();
         $userService = $app->getContainer()->get('userService');
-        /** @var PatrolService $patrolService */
+        assert($userService instanceof UserService);
         $patrolService = $app->getContainer()->get('patrolService');
-        /** @var RoleService $roleService */
+        assert($patrolService instanceof PatrolService);
         $roleService = $app->getContainer()->get('roleService');
+        assert($roleService instanceof RoleService);
 
-        $email = 'test3@example.com';
-        $user = $userService->registerUser($email);
+        $email        = 'test3@example.com';
+        $user         = $userService->registerUser($email);
         $patrolLeader = $patrolService->getPatrolLeader($user);
-        $role = $roleService->getRole($user);
+        $role         = $roleService->getRole($user);
 
         $this->assertEquals($patrolLeader->user->id, $user->id);
         $this->assertEquals('open', $role->status);
 
-        $patrolService->editPatrolLeaderInfo($patrolLeader,
+        $patrolService->editPatrolLeaderInfo(
+            $patrolLeader,
             'leader',
             'leaderový',
             'burákové máslo',
-            (new \DateTime())->format(DATE_ISO8601),
+            (new DateTime())->format(DATE_ISO8601),
             'Kalimdor',
             'Azeroth',
             'attack helicopter',
@@ -79,20 +87,19 @@ class PatrolLeaderTest extends BaseTestCase {
     /**
      * Test that the index route returns a rendered response containing the text 'SlimFramework' but not a greeting
      */
-    public function testAddPatrolParticipant() {
-        $app = $this->app();
-        /** @var UserService $userService */
+    public function testAddPatrolParticipant(): void
+    {
+        $app         = $this->app();
         $userService = $app->getContainer()->get('userService');
-        /** @var PatrolService $patrolService */
+        assert($userService instanceof UserService);
         $patrolService = $app->getContainer()->get('patrolService');
+        assert($patrolService instanceof PatrolService);
 
-        $email = 'test5@example.com';
-        $user = $userService->registerUser($email);
+        $email        = 'test5@example.com';
+        $user         = $userService->registerUser($email);
         $patrolLeader = $patrolService->getPatrolLeader($user);
 
         $participant = $patrolService->addPatrolParticipant($patrolLeader);
         $this->assertEquals($patrolLeader->id, $participant->patrolLeader->id);
     }
-
-
 }

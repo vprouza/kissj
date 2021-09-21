@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__.'/../../');
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
 $dotenv->load();
 
 return [
@@ -15,7 +17,7 @@ return [
         'default_environment' => 'dev',
         'dev' => [
             'adapter' => 'sqlite',
-            'name' => __DIR__.'/../db_dev',
+            'name' => __DIR__ . '/../db_dev',
             'suffix' => '.sqlite',
             'charset' => 'utf8',
         ],

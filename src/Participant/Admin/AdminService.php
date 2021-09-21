@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Participant\Admin;
 
 use kissj\FlashMessages\FlashMessagesInterface;
@@ -12,9 +14,11 @@ use kissj\Payment\PaymentService;
 use kissj\User\User;
 use kissj\User\UserRepository;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class AdminService {
+class AdminService
+{
     public function __construct(
         private UserRepository $userRepository,
         private ParticipantRepository $participantRepository,
@@ -39,7 +43,7 @@ class AdminService {
             return false; // no point to compare futher
         }
 
-        if (!$participantFrom instanceof $participantTo) {
+        if (! $participantFrom instanceof $participantTo) {
             $flash->warning($this->translator->trans('flash.warning.differentParticipants'));
             $isPossible = false;
         }
@@ -68,26 +72,31 @@ class AdminService {
      * Set To as paid and send him email about payment transfer
      * Handle scarf correction on To
      */
-    public function transferPayment(Participant $participantFrom, Participant $participantTo) {
+    public function transferPayment(Participant $participantFrom, Participant $participantTo): void
+    {
         $correctPayment = null;
         foreach ($participantFrom->payment as $payment) {
-            if ($payment->status === Payment::STATUS_PAID) {
-                $correctPayment = $payment;
+            if ($payment->status !== Payment::STATUS_PAID) {
+                continue;
             }
+
+            $correctPayment = $payment;
         }
 
         if ($correctPayment === null) {
-            throw new \RuntimeException('Payment marked as paid was not found with participant marked as paid');
+            throw new RuntimeException('Payment marked as paid was not found with participant marked as paid');
         }
 
         foreach ($participantTo->payment as $payment) {
-            if ($payment->status === Payment::STATUS_WAITING) {
-                $this->paymentService->cancelPayment($payment);
-                $this->mailer->sendCancelledPayment(
-                    $participantTo,
-                    $this->translator->trans('email.text.paymentTransfered', [], null, 'cs') // TODO add preference according to participant
-                );
+            if ($payment->status !== Payment::STATUS_WAITING) {
+                continue;
             }
+
+            $this->paymentService->cancelPayment($payment);
+            $this->mailer->sendCancelledPayment(
+                $participantTo,
+                $this->translator->trans('email.text.paymentTransfered', [], null, 'cs') // TODO add preference according to participant
+            );
         }
 
         // handle scarf correction
@@ -97,10 +106,10 @@ class AdminService {
 
         $correctPayment->participant = $participantTo;
 
-        $userFrom = $participantFrom->user;
+        $userFrom         = $participantFrom->user;
         $userFrom->status = User::STATUS_OPEN;
 
-        $userTo = $participantTo->user;
+        $userTo         = $participantTo->user;
         $userTo->status = User::STATUS_PAID;
 
         $this->paymentRepository->persist($correctPayment);
@@ -111,7 +120,7 @@ class AdminService {
         $this->mailer->sendRegistrationPaid($participantTo);
         $this->mailer->sendPaymentTransferedFromYou($participantFrom);
 
-        $this->logger->info('Tranfered payment ID '.$correctPayment->id
-            .' from participant ID '.$userFrom->id.' to participant ID '.$userTo->id);
+        $this->logger->info('Tranfered payment ID ' . $correctPayment->id
+            . ' from participant ID ' . $userFrom->id . ' to participant ID ' . $userTo->id);
     }
 }

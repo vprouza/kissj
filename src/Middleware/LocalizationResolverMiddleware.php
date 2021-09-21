@@ -1,22 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kissj\Middleware;
 
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
 use Negotiation\AcceptLanguage;
+use Negotiation\LanguageNegotiator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as ResponseHandler;
 use Slim\Views\Twig;
 use Symfony\Component\Translation\Translator;
 
-class LocalizationResolverMiddleware extends BaseMiddleware {
+use function assert;
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
+class LocalizationResolverMiddleware extends BaseMiddleware
+{
     private const LOCALE_COOKIE_NAME = 'locale';
 
     /**
-     * @param string[]   $availableLanguages
+     * @param string[] $availableLanguages
      */
     public function __construct(
         private Twig $view,
@@ -26,7 +35,8 @@ class LocalizationResolverMiddleware extends BaseMiddleware {
     ) {
     }
 
-    public function process(Request $request, ResponseHandler $handler): Response {
+    public function process(Request $request, ResponseHandler $handler): Response
+    {
         if (isset($request->getQueryParams()[self::LOCALE_COOKIE_NAME])) {
             $bestNegotiatedLanguage = htmlspecialchars($request->getQueryParams()[self::LOCALE_COOKIE_NAME], ENT_QUOTES);
         } else {
@@ -49,20 +59,21 @@ class LocalizationResolverMiddleware extends BaseMiddleware {
         return $response;
     }
 
-    private function getBestLanguage(Request $request): string {
+    private function getBestLanguage(Request $request): string
+    {
         $localeCookie = FigRequestCookies::get($request, self::LOCALE_COOKIE_NAME);
         if ($localeCookie->getValue() !== null) {
             return $localeCookie->getValue();
         }
 
-        $negotiator = new \Negotiation\LanguageNegotiator();
-        $header = $request->getHeaderLine('Accept-Language');
+        $negotiator = new LanguageNegotiator();
+        $header     = $request->getHeaderLine('Accept-Language');
         if ($header === '') {
             return $this->defaultLocale;
         }
 
-        /** @var AcceptLanguage $negotiatedLanguage */
         $negotiatedLanguage = $negotiator->getBest($header, $this->availableLanguages);
+        assert($negotiatedLanguage instanceof AcceptLanguage);
 
         return $negotiatedLanguage ? $negotiatedLanguage->getValue() : $this->defaultLocale;
     }

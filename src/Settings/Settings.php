@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace kissj\Settings;
@@ -34,11 +35,13 @@ use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\DebugExtension;
+
 use function DI\autowire;
 use function DI\create;
 use function DI\get;
 
-class Settings {
+class Settings
+{
     private const LOCALES_AVAILABLE = ['en', 'cs', 'sk'];
 
     public function getContainerDefinition(string $envPath, string $envFilename, string $dbFullPath): array {
@@ -120,7 +123,7 @@ class Settings {
 
             return new PhpMailerWrapper($renderer, $settings);
         };
-        $container[S3bucketFileHandler::class] 
+        $container[S3bucketFileHandler::class]
             = fn(S3Client $s3Client) => new S3bucketFileHandler($s3Client, $_ENV['S3_BUCKET']);
         $container[S3Client::class] = fn() => new S3Client([
             'version' => 'latest',
@@ -179,7 +182,7 @@ class Settings {
 
             return $view;
         };
-        $container[UserAuthenticationMiddleware::class] 
+        $container[UserAuthenticationMiddleware::class]
             = fn(UserRegeneration $userRegeneration) => new UserAuthenticationMiddleware($userRegeneration);
 
         return $container;

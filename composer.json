@@ -80,7 +80,7 @@
 		"phinx:migrate": "vendor/bin/phinx migrate --configuration src/Settings/phinxConfiguration.php",
 		"phinx:rollback": "vendor/bin/phinx rollback --configuration src/Settings/phinxConfiguration.php",
 		"phinx:status": "vendor/bin/phinx status --configuration src/Settings/phinxConfiguration.php",
-		"cs": "vendor/bin/phpcs --standard=ruleset.xml --encoding=utf-8 --extensions=php --colors -nsp public src tests",
-		"csf": "vendor/bin/phpcbf --standard=ruleset.xml --encoding=utf-8 --extensions=php --colors -nsp public src tests "
+		"cs": "vendor/bin/phpcs --standard=ruleset.xml --encoding=utf-8 --extensions=php --ignore=src/Templates/exception.php,src/Application/migrations --colors -nsp public src tests",
+		"csf": "vendor/bin/phpcbf --standard=ruleset.xml --encoding=utf-8 --extensions=php --ignore=src/Templates/exception.php --colors -nsp public src tests "
     }
 }

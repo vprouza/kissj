@@ -11,6 +11,7 @@ use kissj\User\RoleService;
 use kissj\User\UserService;
 
 use function assert;
+use function sprintf;
 
 use const DATE_ISO8601;
 
@@ -37,7 +38,7 @@ class ExportTest extends BaseTestCase
             $patrolLeader = $patrolService->getPatrolLeader($user);
             $patrolService->editPatrolLeaderInfo(
                 $patrolLeader,
-                "leader$i",
+                sprintf('leader%s', $i),
                 'leaderový',
                 'burákové máslo' . $i,
                 (new DateTime())->format(DATE_ISO8601),

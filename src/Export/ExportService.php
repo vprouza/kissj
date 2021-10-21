@@ -33,7 +33,7 @@ class ExportService
         array $csvRows,
         string $fileName,
         bool $amendTimestamp = true
-    ) {
+    ): Response {
         if ($amendTimestamp) {
             $fileName .= '_' . date(DATE_ATOM);
         }

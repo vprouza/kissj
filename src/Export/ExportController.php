@@ -18,7 +18,7 @@ class ExportController extends AbstractController
     ) {
     }
 
-    public function exportHealthData(Request $request, Response $response)
+    public function exportHealthData(Request $request, Response $response): Response
     {
         $event = $request->getAttribute('user')->event;
         assert($event instanceof Event);
@@ -28,7 +28,7 @@ class ExportController extends AbstractController
         return $this->exportService->outputCSVresponse($response, $csvRows, $event->slug . '_health');
     }
 
-    public function exportPaidData(Request $request, Response $response)
+    public function exportPaidData(Request $request, Response $response): Response
     {
         $event = $request->getAttribute('user')->event;
         assert($event instanceof Event);
@@ -38,7 +38,7 @@ class ExportController extends AbstractController
         return $this->exportService->outputCSVresponse($response, $csvRows, $event->slug . '_paid');
     }
 
-    public function exportFullData(Request $request, Response $response)
+    public function exportFullData(Request $request, Response $response): Response
     {
         $event = $request->getAttribute('user')->event;
         assert($event instanceof Event);

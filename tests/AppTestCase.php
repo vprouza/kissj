@@ -8,6 +8,7 @@ use kissj\Application\ApplicationGetter;
 use PDO;
 use Phinx\Console\PhinxApplication;
 use PHPUnit\Framework\TestCase;
+use Traversable;
 use RuntimeException;
 use Slim\App;
 use Slim\Psr7\Factory\StreamFactory;
@@ -61,6 +62,11 @@ class AppTestCase extends TestCase
         );
     }
 
+	/**
+	 * @param Traversable $body
+	 * @param Traversable $serverParams
+	 * @param Traversable $cookies
+	 */
     protected function createRequest(
         string $path,
         string $method = 'GET',

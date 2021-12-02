@@ -53,9 +53,8 @@
     "require-dev": {
         "ext-pdo": "*",
         "mockery/mockery": "dev-master",
-        "phpstan/phpstan": "^0.12.9",
+        "phpstan/phpstan": "^1.2.0",
         "phpunit/phpunit": "^9",
-        "rector/rector": "^0.11.53",
         "roave/security-advisories": "dev-latest"
     },
     "autoload": {

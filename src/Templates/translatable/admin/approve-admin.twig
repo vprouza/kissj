@@ -23,7 +23,7 @@
                     <br/>
                     <br/>
                     <form method="post"
-                          action="{{ url_for('admin-approve-ist', {'istId': ist.getId, 'eventSlug': event.slug}) }}">
+                          action="{{ url_for('admin-approve', {'participantId': ist.getId, 'eventSlug': event.slug}) }}">
                         <input type="submit"
                                value="{% trans %}approve-admin.approveAndSend{% endtrans %}"
                                class="btn btn-small">
@@ -63,7 +63,7 @@
                     <br/>
                     <br/>
                     <form method="post"
-                          action="{{ url_for('admin-approve-pl', {'patrolLeaderId': pl.getId, 'eventSlug': event.slug}) }}">
+                          action="{{ url_for('admin-approve', {'participantId': pl.getId, 'eventSlug': event.slug}) }}">
                         <input type="submit"
                                value="{% trans %}approve-admin.approveAndSend{% endtrans %}"
                                class="btn btn-small">
@@ -155,7 +155,7 @@
     {% if event.allowGuests %}
         {% if closedGuests is not empty %}
             <div class="card closed-theme">
-                <h2>Guests</h2>
+                <h2>{% trans %}role.guest{% endtrans %}</h2>
             </div>
             <br/>
             {% for guest in closedGuests %}
@@ -168,7 +168,7 @@
                     <br/>
                     <br/>
                     <form method="post"
-                          action="{{ url_for('admin-approve-guest', {'participantId': guest.getId, 'eventSlug': event.slug}) }}">
+                          action="{{ url_for('admin-approve', {'participantId': guest.getId, 'eventSlug': event.slug}) }}">
                         <input type="submit" value="{% trans %}approve-admin.approveAndSend{% endtrans %}" class="btn btn-small">
                     </form>
                 </div>

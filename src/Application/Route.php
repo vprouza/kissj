@@ -8,17 +8,12 @@ use kissj\Export\ExportController;
 use kissj\Middleware\AdminsOnlyMiddleware;
 use kissj\Middleware\CheckPatrolLeaderParticipants;
 use kissj\Middleware\ChoosedRoleOnlyMiddleware;
-use kissj\Middleware\GuestsOnlyMiddleware;
-use kissj\Middleware\IstsOnlyMiddleware;
 use kissj\Middleware\LoggedOnlyMiddleware;
 use kissj\Middleware\NonChoosedRoleOnlyMiddleware;
 use kissj\Middleware\NonLoggedOnlyMiddleware;
 use kissj\Middleware\OpenStatusOnlyMiddleware;
 use kissj\Middleware\PatrolLeadersOnlyMiddleware;
-use kissj\Middleware\TroopsOnlyMiddleware;
 use kissj\Participant\Admin\AdminController;
-use kissj\Participant\Guest\GuestController;
-use kissj\Participant\Ist\IstController;
 use kissj\Participant\ParticipantController;
 use kissj\Participant\Patrol\PatrolController;
 use kissj\User\UserController;
@@ -100,12 +95,6 @@ class Route
                             ->setName('p-show');
 
                         $app->group('', function (RouteCollectorProxy $app) {
-                            $app->get('/changeDetails', PatrolController::class . '::showDetailsChangeableLeader')
-                                ->setName('pl-showDetailsChangeable');
-
-                            $app->post('/changeDetails', PatrolController::class . '::changeDetailsLeader')
-                                ->setName('pl-changeDetails');
-
                             $app->get('/closeRegistration', PatrolController::class . '::showCloseRegistration')
                                 ->setName('pl-showCloseRegistration');
 
@@ -134,27 +123,7 @@ class Route
                         })->add(OpenStatusOnlyMiddleware::class);
                     })->add(PatrolLeadersOnlyMiddleware::class);
 
-                    $app->group('/ist', function (RouteCollectorProxy $app) {
-                        $app->get('/dashboard', IstController::class . '::showDashboard')
-                            ->setName('ist-dashboard');
-
-                        $app->group('', function (RouteCollectorProxy $app) {
-                            $app->get('/showChangeDetails', IstController::class . '::showDetailsChangeable')
-                                ->setName('ist-showDetailsChangeable');
-
-                            $app->post('/changeDetails', IstController::class . '::changeDetails')
-                                ->setName('ist-changeDetails');
-
-                            $app->get('/closeRegistration', IstController::class . '::showCloseRegistration')
-                                ->setName('ist-showCloseRegistration');
-
-                            $app->post('/closeRegistration', IstController::class . '::closeRegistration')
-                                ->setName('ist-confirmCloseRegistration');
-
-                        })->add(OpenStatusOnlyMiddleware::class);
-                    })->add(IstsOnlyMiddleware::class);
-
-                    // currently for troops only, TODO refactor for all participants
+                    // TODO refactor for patrols
                     $app->group('/participant', function (RouteCollectorProxy $app) {
                         $app->get('/dashboard', ParticipantController::class . '::showDashboard')
                             ->setName('dashboard');
@@ -173,27 +142,7 @@ class Route
                                 ->setName('confirmCloseRegistration');
 
                         })->add(OpenStatusOnlyMiddleware::class);
-                    })->add(TroopsOnlyMiddleware::class);
-
-                    $app->group('/guest', function (RouteCollectorProxy $app) {
-                        $app->get('/dashboard', GuestController::class . '::showDashboard')
-                            ->setName('guest-dashboard');
-
-                        $app->group('', function (RouteCollectorProxy $app) {
-                            $app->get('/showChangeDetails', GuestController::class . '::showDetailsChangeable')
-                                ->setName('guest-showDetailsChangeable');
-
-                            $app->post('/changeDetails', GuestController::class . '::changeDetails')
-                                ->setName('guest-changeDetails');
-
-                            $app->get('/closeRegistration', GuestController::class . '::showCloseRegistration')
-                                ->setName('guest-showCloseRegistration');
-
-                            $app->post('/closeRegistration', GuestController::class . '::closeRegistration')
-                                ->setName('guest-confirmCloseRegistration');
-
-                        })->add(OpenStatusOnlyMiddleware::class);
-                    })->add(GuestsOnlyMiddleware::class);
+                    });
                 })->add(LoggedOnlyMiddleware::class)->add(ChoosedRoleOnlyMiddleware::class);
 
                 $app->group('/admin', function (RouteCollectorProxy $app) {
@@ -203,18 +152,12 @@ class Route
                     $app->get('/showFile/{filename}', AdminController::class . '::showFile')
                         ->setName('admin-show-file');
 
+                    $app->get('/showOpen', AdminController::class . '::showOpen')
+                        ->setName('admin-show-open');
+
                     $app->group('/approving', function (RouteCollectorProxy $app) {
                         $app->get('', AdminController::class . '::showApproving')
                             ->setName('admin-show-approving');
-
-                        $app->post('/approvePatrolLeader/{patrolLeaderId}', AdminController::class . '::approvePatrol')
-                            ->setName('admin-approve-pl');
-
-                        $app->post('/approveIst/{istId}', AdminController::class . '::approveIst')
-                            ->setName('admin-approve-ist');
-
-                        $app->post('/approveGuest/{guestId}', AdminController::class . '::approveGuest')
-                            ->setName('admin-approve-guest');
 
                         $app->post('/approveParticipant/{participantId}', AdminController::class . '::approveParticipant')
                             ->setName('admin-approve');

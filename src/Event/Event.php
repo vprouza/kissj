@@ -49,9 +49,12 @@ use kissj\Orm\EntityDatetime;
  * @property int|null          $maximalClosedGuestsCount
  *
  * @property bool              $allowTroops
- * @property int|null          $maximalClosedTroopsCount
+ * @property int|null          $maximalClosedTroopLeadersCount
+ * @property int|null          $maximalClosedTroopParticipantsCount
  * @property int|null          $minimalTroopParticipantsCount
  * @property int|null          $maximalTroopParticipantsCount
+ * 
+ * @property int|null          $maximalClosedParticipantsCount
  *
  * @property DateTimeInterface $startRegistration m:passThru(dateFromString|dateToString)
  * @property DateTimeInterface $startDay m:passThru(dateFromString|dateToString)
@@ -80,9 +83,9 @@ class Event extends EntityDatetime
         return new $eventTypeClass;
     }
     
-    public function canRegistrationBeLocked(): bool // TODO fix
+    public function canRegistrationBeLocked(): bool
     {
-        return $this->startRegistration <= new DateTimeImmutable('now', new \DateTimeZone('Europe/Berlin'));
+        return $this->startRegistration <= new DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
     
     public function getLogoInBase64(): string

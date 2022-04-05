@@ -7,17 +7,13 @@ use kissj\BankPayment\BankPayment;
 use kissj\BankPayment\BankPaymentRepository;
 use kissj\BankPayment\FioBankPaymentService;
 use kissj\Event\Event;
-use kissj\Participant\Guest\GuestRepository;
+use kissj\Orm\Order;
 use kissj\Participant\Guest\GuestService;
-use kissj\Participant\Ist\IstRepository;
 use kissj\Participant\Ist\IstService;
-use kissj\Participant\Participant;
 use kissj\Participant\ParticipantRepository;
 use kissj\Participant\ParticipantService;
-use kissj\Participant\Patrol\PatrolLeaderRepository;
 use kissj\Participant\Patrol\PatrolService;
 use kissj\Participant\Troop\TroopService;
-use kissj\Payment\Payment;
 use kissj\Payment\PaymentRepository;
 use kissj\Payment\PaymentService;
 use kissj\User\User;
@@ -34,9 +30,6 @@ class AdminController extends AbstractController
         private BankPaymentRepository $bankPaymentRepository,
         private FioBankPaymentService $bankPaymentService,
         private PatrolService $patrolService,
-        private PatrolLeaderRepository $patrolLeaderRepository,
-        private IstRepository $istRepository,
-        private GuestRepository $guestRepository,
         private IstService $istService,
         private GuestService $guestService,
         private TroopService $troopService,
@@ -59,41 +52,100 @@ class AdminController extends AbstractController
         );
     }
 
+    public function showOpen(
+        Response $response,
+        Event $event,
+        User $user,
+    ): Response {
+        $orderByUpdatedAtDesc = new Order(Order::FILED_UPDATED_AT, Order::DIRECTION_DESC);
+
+        return $this->view->render($response, 'admin/open-admin.twig', [
+            'openPatrolLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
+                [User::ROLE_PATROL_LEADER],
+                [USER::STATUS_OPEN],
+                $event,
+                $user,
+                $orderByUpdatedAtDesc,
+            ),
+            'openTroopLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
+                [User::ROLE_TROOP_LEADER],
+                [USER::STATUS_OPEN],
+                $event,
+                $user,
+                $orderByUpdatedAtDesc,
+            ),
+            'openTroopParticipants' => $this->participantRepository->getAllParticipantsWithStatus(
+                [User::ROLE_TROOP_PARTICIPANT],
+                [USER::STATUS_OPEN],
+                $event,
+                $user,
+                $orderByUpdatedAtDesc,
+            ),
+            'openIsts' => $this->participantRepository->getAllParticipantsWithStatus(
+                [User::ROLE_IST],
+                [USER::STATUS_OPEN],
+                $event,
+                $user,
+                $orderByUpdatedAtDesc,
+            ),
+            'openGuests' => $this->participantRepository->getAllParticipantsWithStatus(
+                [User::ROLE_GUEST],
+                [USER::STATUS_OPEN],
+                $event,
+                $user,
+                $orderByUpdatedAtDesc,
+            ),
+            'caIst' => $event->getEventType()->getContentArbiterIst(),
+            'caPl' => $event->getEventType()->getContentArbiterPatrolLeader(),
+            'caPp' => $event->getEventType()->getContentArbiterPatrolParticipant(),
+            'caTl' => $event->getEventType()->getContentArbiterTroopLeader(),
+            'caTp' => $event->getEventType()->getContentArbiterTroopParticipant(),
+            'caGuest' => $event->getEventType()->getContentArbiterGuest(),
+        ]);
+    }
+
     public function showApproving(
         Response $response,
         Event $event,
         User $user,
     ): Response {
+        $orderByUpdatedAtDesc = new Order(Order::FILED_UPDATED_AT, Order::DIRECTION_DESC);
+
         return $this->view->render($response, 'admin/approve-admin.twig', [
             'closedPatrolLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_PATROL_LEADER],
                 [USER::STATUS_CLOSED],
                 $event,
                 $user,
-            ),            
+                $orderByUpdatedAtDesc,
+            ),
             'closedTroopLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_TROOP_LEADER],
                 [USER::STATUS_CLOSED],
                 $event,
                 $user,
-            ),  
+                $orderByUpdatedAtDesc,
+            ),
             'closedTroopParticipants' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_TROOP_PARTICIPANT],
                 [USER::STATUS_CLOSED],
                 $event,
                 $user,
+                $orderByUpdatedAtDesc,
             ),
             'closedIsts' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_IST],
                 [USER::STATUS_CLOSED],
                 $event,
                 $user,
+                $orderByUpdatedAtDesc,
             ),
             'closedGuests' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_GUEST],
                 [USER::STATUS_CLOSED],
                 $event,
                 $user,
+                $orderByUpdatedAtDesc,
             ),
             'caIst' => $event->getEventType()->getContentArbiterIst(),
             'caPl' => $event->getEventType()->getContentArbiterPatrolLeader(),
@@ -109,7 +161,6 @@ class AdminController extends AbstractController
         $participant = $this->participantRepository->get($participantId);
 
         $this->participantService->approveRegistration($participant);
-        $this->flashMessages->success($this->translator->trans('flash.success.approved'));
         $this->logger->info('Approved registration for participant with ID ' . $participant->id);
 
         return $this->redirect($request, $response, 'admin-show-approving');
@@ -126,45 +177,11 @@ class AdminController extends AbstractController
     {
         // TODO check if correct event
         $reason = $this->getParameterFromBody($request, 'reason', true);
-        /** @var Participant $participant */
         $participant = $this->participantRepository->get($participantId);
         $this->participantService->denyRegistration($participant, $reason);
-        $this->flashMessages->info($this->translator->trans('flash.info.istDenied')); // TODO re-word deny flash message
+        $this->flashMessages->info($this->translator->trans('flash.info.denied'));
         $this->logger->info('Denied registration for participant with ID '
             . $participantId . ' and role ' . $participant->role . ' with reason: ' . $reason);
-
-        return $this->redirect($request, $response, 'admin-show-approving');
-    }
-
-    public function approvePatrol(int $patrolLeaderId, Request $request, Response $response): Response
-    {
-        $patrolLeader = $this->patrolLeaderRepository->get($patrolLeaderId);
-        $this->participantService->approveRegistration($patrolLeader);
-        $this->flashMessages->success($this->translator->trans('flash.success.patrolApproved'));
-        $this->logger->info('Approved registration for Patrol with Patrol Leader ID ' . $patrolLeader->id);
-
-        return $this->redirect($request,
-            $response,
-            'admin-show-approving',
-        );
-    }
-
-    public function approveIst(int $istId, Request $request, Response $response): Response
-    {
-        $ist = $this->istRepository->get($istId);
-        $this->participantService->approveRegistration($ist);
-        $this->flashMessages->success($this->translator->trans('flash.success.istApproved'));
-        $this->logger->info('Approved registration for IST with ID ' . $ist->id);
-
-        return $this->redirect($request, $response, 'admin-show-approving');
-    }
-
-    public function approveGuest(int $guestId, Request $request, Response $response): Response
-    {
-        $guest = $this->guestRepository->get($guestId);
-        $this->guestService->finishRegistration($guest);
-        $this->flashMessages->success($this->translator->trans('flash.success.guestApproved'));
-        $this->logger->info('Approved (no payment was sent) registration for guest with ID ' . $guest->id);
 
         return $this->redirect($request, $response, 'admin-show-approving');
     }

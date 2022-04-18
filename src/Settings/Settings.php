@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace kissj\Settings;
 
@@ -89,7 +91,7 @@ class Settings
         $container[IMapper::class] = create(Mapper::class);
         $container[IEntityFactory::class] = create(DefaultEntityFactory::class);
 
-        $container[SentryClient::class] = function(): ClientInterface {
+        $container[SentryClient::class] = function (): ClientInterface {
             return ClientBuilder::create([
                 'dsn' => $_ENV['SENTRY_DSN'],
                 'environment' => $_ENV['DEBUG'] !== 'true' ? 'PROD' : 'DEBUG',
@@ -107,7 +109,7 @@ class Settings
             ])->getClient();
         };
 
-        $container[SentryHub::class] = fn(SentryClient $sentryClient): SentryHub => new SentryHub($sentryClient);
+        $container[SentryHub::class] = fn (SentryClient $sentryClient): SentryHub => new SentryHub($sentryClient);
 
         $container[Logger::class] = function (SentryHub $sentryHub): LoggerInterface {
             $logger = new Logger($_ENV['APP_NAME']);
@@ -150,8 +152,8 @@ class Settings
             );
         };
         $container[S3bucketFileHandler::class]
-            = fn(S3Client $s3Client) => new S3bucketFileHandler($s3Client, $_ENV['S3_BUCKET']);
-        $container[S3Client::class] = fn() => new S3Client([
+            = fn (S3Client $s3Client) => new S3bucketFileHandler($s3Client, $_ENV['S3_BUCKET']);
+        $container[S3Client::class] = fn () => new S3Client([
             'version' => 'latest',
             'region' => $_ENV['S3_REGION'],
             'endpoint' => $_ENV['S3_ENDPOINT'],
@@ -193,31 +195,25 @@ class Settings
             $user = $userRegeneration->getCurrentUser();
             $view->getEnvironment()->addGlobal('user', $user);
             $view->getEnvironment()->addGlobal('debug', $_ENV['DEBUG'] === "true");
-            /*
-            // TODO move into middleware
-            if ($settings['useTestingSite']) {
-                $flashMessages->info('Test version - please do not imput any real personal details!');
-                $flashMessages->info('Administration login: admin, password: admin, link: '
-                    .$router->getRouteParser()->urlFor('administration'));
-            }*/
 
             $view->addExtension(new DebugExtension()); // not needed to disable in production
             $view->addExtension(new TranslationExtension($translator));
+            $view->addExtension(new TwigExtension());
 
             return $view;
         };
 
         $container[UserAuthenticationMiddleware::class]
-            = fn(UserRegeneration $userRegeneration) => new UserAuthenticationMiddleware($userRegeneration);
+            = fn (UserRegeneration $userRegeneration) => new UserAuthenticationMiddleware($userRegeneration);
 
         $container[SentryHttpContextMiddleware::class]
-            = fn(SentryHub $sentryHub): SentryHttpContextMiddleware => new SentryHttpContextMiddleware($sentryHub);
+            = fn (SentryHub $sentryHub): SentryHttpContextMiddleware => new SentryHttpContextMiddleware($sentryHub);
 
         $container[SentryContextMiddleware::class]
-            = fn(SentryHub $sentryHub): SentryContextMiddleware => new SentryContextMiddleware($sentryHub);
+            = fn (SentryHub $sentryHub): SentryContextMiddleware => new SentryContextMiddleware($sentryHub);
 
         $container[MonologContextMiddleware::class]
-            = fn(Logger $logger): MonologContextMiddleware => new MonologContextMiddleware($logger);
+            = fn (Logger $logger): MonologContextMiddleware => new MonologContextMiddleware($logger);
 
         return $container;
     }
@@ -229,8 +225,6 @@ class Settings
         $dotenv->required('DEFAULT_LOCALE')->notEmpty()->allowedValues(self::LOCALES_AVAILABLE);
         $dotenv->required('LOGGER_FILENAME')->notEmpty();
         $dotenv->required('LOGGER_LEVEL')->notEmpty()->allowedValues(array_flip(Logger::getLevels()));
-        $dotenv->required('ADMINER_LOGIN')->notEmpty();
-        $dotenv->required('ADMINER_PASSWORD')->notEmpty();
         $dotenv->required('MAIL_SMTP');
         $dotenv->required('MAIL_SMTP_SERVER');
         $dotenv->required('MAIL_SMTP_AUTH');
@@ -257,9 +251,5 @@ class Settings
         $dotenv->required('POSTGRES_DB');
         $dotenv->required('SENTRY_DSN');
         $dotenv->required('SENTRY_PROFILING_RATE')->notEmpty();
-
-        if ($_ENV['ADMINER_PASSWORD'] === 'changeThisPassword' || $_ENV['ADMINER_PASSWORD'] === '') {
-            throw new ValidationException('Adminer password must be changed and cannot be empty');
-        }
     }
 }

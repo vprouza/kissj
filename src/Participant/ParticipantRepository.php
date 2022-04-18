@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace kissj\Participant;
 
@@ -22,9 +24,6 @@ class ParticipantRepository extends Repository
      *
      * @param string[] $roles
      * @param string[] $statuses
-     * @param Event $event
-     * @param ?User $adminUser
-     * @param ?Order $order
      * @return Participant[]
      */
     public function getAllParticipantsWithStatus(
@@ -33,6 +32,7 @@ class ParticipantRepository extends Repository
         Event $event,
         ?User $adminUser = null,
         ?Order $order = null,
+        bool $filterEmptyParticipants = false,
     ): array {
         $participants = $this->findAll();
 
@@ -64,6 +64,10 @@ class ParticipantRepository extends Repository
                 }
             );
         }
+        
+        if ($filterEmptyParticipants) {
+            $validParticipants = $this->filterEmptyParticipants($validParticipants);
+        }
 
         return $validParticipants;
     }
@@ -89,10 +93,23 @@ class ParticipantRepository extends Repository
             User::ROLE_CONTINGENT_ADMIN_HU => array_filter($participants, function (Participant $p): bool {
                 return $p->contingent === EventTypeCej::CONTINGENT_HUNGARY;
             }),
-            User::ROLE_CONTINGENT_ADMIN_EU => array_filter($participants, function (Participant $p): bool {
+            User::ROLE_CONTINGENT_ADMIN_EU => array_filter(
+                $participants,
+                function (Participant $p): bool {
                 return $p->contingent === EventTypeCej::CONTINGENT_EUROPEAN;
-            }),
+            }
+            ),
             default => [],
         };
+    }
+
+    /**
+     * @param Participant[] $participants
+     * @return Participant[]
+     */
+    private function filterEmptyParticipants(array $participants): array {
+        return array_filter($participants, function (Participant $participant): bool {
+            return $participant->getFullName() !== ' ';
+        });
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace kissj\Participant\Admin;
 
+use DateTimeImmutable;
 use kissj\AbstractController;
 use kissj\BankPayment\BankPayment;
 use kissj\BankPayment\BankPaymentRepository;
@@ -62,46 +63,6 @@ class AdminController extends AbstractController
         $orderByUpdatedAtDesc = new Order(Order::FILED_UPDATED_AT, Order::DIRECTION_DESC);
 
         return $this->view->render($response, 'admin/stats-admin.twig', [
-            'openPatrolLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
-                [User::ROLE_PATROL_LEADER],
-                [USER::STATUS_OPEN],
-                $event,
-                $user,
-                $orderByUpdatedAtDesc,
-                true,
-            ),
-            'openTroopLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
-                [User::ROLE_TROOP_LEADER],
-                [USER::STATUS_OPEN],
-                $event,
-                $user,
-                $orderByUpdatedAtDesc,
-                true,
-            ),
-            'openTroopParticipants' => $this->participantRepository->getAllParticipantsWithStatus(
-                [User::ROLE_TROOP_PARTICIPANT],
-                [USER::STATUS_OPEN],
-                $event,
-                $user,
-                $orderByUpdatedAtDesc,
-                true,
-            ),
-            'openIsts' => $this->participantRepository->getAllParticipantsWithStatus(
-                [User::ROLE_IST],
-                [USER::STATUS_OPEN],
-                $event,
-                $user,
-                $orderByUpdatedAtDesc,
-                true,
-            ),
-            'openGuests' => $this->participantRepository->getAllParticipantsWithStatus(
-                [User::ROLE_GUEST],
-                [USER::STATUS_OPEN],
-                $event,
-                $user,
-                $orderByUpdatedAtDesc,
-                true,
-            ),
             'paidPatrolLeaders' => $this->participantRepository->getAllParticipantsWithStatus(
                 [User::ROLE_PATROL_LEADER],
                 [USER::STATUS_PAID],
@@ -361,11 +322,14 @@ class AdminController extends AbstractController
     public function confirmPayment(int $paymentId, User $user, Request $request, Response $response): Response
     {
         $payment = $this->paymentRepository->get($paymentId);
-        if ($payment->participant->getUserButNotNull()->event->id !== $user->event->id) {
+        $participant = $payment->participant;
+        if ($participant->getUserButNotNull()->event->id !== $user->event->id) {
             $this->flashMessages->warning($this->translator->trans('flash.error.confirmNotAllowed'));
             $this->logger->info('Payment ID ' . $paymentId
                 . ' cannot be confirmed from admin with event id ' . $user->event->id);
         } else {
+            $participant->registrationCloseDate = new DateTimeImmutable();
+            $this->participantRepository->persist($participant);
             $this->paymentService->confirmPayment($payment);
             $this->flashMessages->success($this->translator->trans('flash.success.comfirmPayment'));
             $this->logger->info('Payment ID ' . $paymentId . ' manually confirmed as paid');
